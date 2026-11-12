@@ -72,6 +72,8 @@ oie-message-inspector/
 
 ## OIE-Specific Patterns
 
+- **Supported OIE versions**: `oie.compatibleVersions` in the parent POM feeds `<mirthVersion>` in `plugin.xml`. OIE strips the build number from its own version and compares major.minor.patch exactly against each comma-separated entry, so every patch release (e.g. 4.7.1) must be listed explicitly. Update README "Installation" when changing it.
+
 - **XStream JSON wrapping**: OIE's MirthServlet wraps every POJO in its Java class name. Frontend has `unwrap()` to strip these wrappers. Use plain `ArrayList` in responses (not `Collections.unmodifiableList()` which XStream can't serialize).
 - **API headers**: All `fetch()` calls to `/api/` endpoints MUST include `'X-Requested-With': 'XMLHttpRequest'` header or the server returns HTTP 400.
 - **HL7v2 Vocabulary**: `HL7v2Vocabulary` is on the OIE server classpath but not a compile-time dependency — accessed via reflection in `InspectorServlet`.

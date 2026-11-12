@@ -6,7 +6,7 @@
     <name>Message Inspector</name>
     <author>Getinge IT Solutions GmbH</author>
     <pluginVersion>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}</pluginVersion>
-    <mirthVersion>${oie.version}</mirthVersion>
+    <mirthVersion>${oie.compatibleVersions}</mirthVersion>
     <url>https://www.getinge.com</url>
     <description>Structured tree view with field-level descriptions, table lookups, and validation for HL7v2 messages.</description>
 

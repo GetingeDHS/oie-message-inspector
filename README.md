@@ -27,6 +27,8 @@ The build produces a ZIP file in `message-inspector-plugin/target/` that can be 
 
 ## Installation
 
+Compatible with OIE **4.6.0** and **4.7.0**.
+
 1. Extract the ZIP into the OIE `extensions/` directory
 2. Restart the OIE server
 3. The extension appears as "Message Inspector" in the Web Client navigation and as an "Inspect Message" action in the Message Browser
