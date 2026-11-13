@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Getinge IT Solutions GmbH
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build extension with version from tag
+        run: mvn -B clean package -Drevision="${GITHUB_REF_NAME#v}"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            message-inspector-plugin/target/oie-message-inspector-*.zip \
+            --title "Message Inspector ${GITHUB_REF_NAME#v}" \
+            --generate-notes

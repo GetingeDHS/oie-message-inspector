@@ -1,0 +1,9 @@
+target/
+*.iml
+.idea/
+.settings/
+.classpath
+.project
+node_modules/
+message-inspector-plugin/webadmin/web/plugin.js
+.flattened-pom.xml
