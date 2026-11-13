@@ -19,10 +19,15 @@ oie-message-inspector/
 ├── pom.xml                              # Parent POM (${revision} versioning)
 ├── CONTRIBUTING.md                      # Contributor guide (DCO, license headers)
 ├── LICENSE                              # MPL-2.0 full text
-├── .github/workflows/
-│   ├── build.yml                        # Maven build on push/PR to main, uploads ZIP artifact
-│   ├── dco.yml                          # DCO sign-off check for PRs
-│   └── release.yml                      # Tag vX.Y.Z → build with that version, GitHub release with ZIP
+├── SECURITY.md                          # Private vulnerability reporting
+├── .github/
+│   ├── CODEOWNERS                       # Auto-requested reviewers
+│   ├── dependabot.yml                   # Weekly updates: actions, Maven build plugins, npm (OIE-provided libs ignored)
+│   └── workflows/
+│       ├── build.yml                    # Maven build on push/PR to main, uploads ZIP artifact
+│       ├── codeql.yml                   # CodeQL for Java, JS and workflows (PR, main, weekly)
+│       ├── dco.yml                      # DCO sign-off check for PRs (skipped for Dependabot)
+│       └── release.yml                  # Tag vX.Y.Z → build with that version, GitHub release with ZIP
 ├── message-inspector-plugin/
 │   ├── pom.xml                          # Plugin module
 │   ├── src/assembly/extension.xml       # ZIP packaging descriptor

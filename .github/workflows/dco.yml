@@ -12,6 +12,8 @@ permissions:
 jobs:
   dco:
     name: DCO sign-off check
+    # Dependabot cannot sign off; its PRs only touch dependency versions
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

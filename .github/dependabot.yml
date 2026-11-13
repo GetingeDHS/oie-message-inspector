@@ -1,0 +1,34 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Getinge IT Solutions GmbH
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']
+
+  # Only Maven build plugins are updated. The libraries are "provided" by the
+  # OIE server at runtime and must stay on the versions OIE ships.
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      - dependency-name: 'com.mirth.connect:*'
+      - dependency-name: 'ca.uhn.hapi:*'
+      - dependency-name: 'com.fasterxml.jackson.core:*'
+      - dependency-name: 'org.apache.logging.log4j:*'
+      - dependency-name: 'javax.ws.rs:*'
+      - dependency-name: 'javax.servlet:*'
+      - dependency-name: 'io.swagger.core.v3:*'
+    groups:
+      maven-plugins:
+        patterns: ['*']
+
+  - package-ecosystem: npm
+    directory: /message-inspector-plugin/webadmin
+    schedule:
+      interval: weekly
