@@ -1,0 +1,10 @@
+{
+    "id": "message-inspector",
+    "name": "Message Inspector",
+    "version": "1.0.0",
+    "author": "Getinge IT Solutions GmbH",
+    "description": "Structured tree view with field-level descriptions, table lookups, and validation for HL7v2 messages.",
+    "enabled": true,
+    "oie": { "apiMin": "4.6" },
+    "client": { "entry": "web/plugin.js" }
+}

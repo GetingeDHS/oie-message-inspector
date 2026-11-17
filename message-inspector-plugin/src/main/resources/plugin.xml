@@ -1,0 +1,21 @@
+<!--
+  SPDX-License-Identifier: MPL-2.0
+  Copyright (c) 2026 Getinge IT Solutions GmbH
+-->
+<pluginMetaData path="oie-message-inspector">
+    <name>Message Inspector</name>
+    <author>Getinge IT Solutions GmbH</author>
+    <pluginVersion>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}</pluginVersion>
+    <mirthVersion>${oie.compatibleVersions}</mirthVersion>
+    <url>https://www.getinge.com</url>
+    <description>Structured tree view with field-level descriptions, table lookups, and validation for HL7v2 messages.</description>
+
+    <serverClasses>
+        <string>com.oie.messageinspector.server.MessageInspectorServicePlugin</string>
+    </serverClasses>
+
+<apiProvider type="SERVLET_INTERFACE" name="com.oie.messageinspector.server.InspectorServletInterface"/>
+    <apiProvider type="SERVER_CLASS" name="com.oie.messageinspector.server.InspectorServlet"/>
+
+    <library type="SHARED" path="message-inspector-plugin-${project.version}.jar"/>
+</pluginMetaData>
