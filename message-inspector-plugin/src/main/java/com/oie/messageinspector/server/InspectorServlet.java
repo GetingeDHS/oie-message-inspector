@@ -37,6 +37,9 @@ public class InspectorServlet extends MirthServlet implements InspectorServletIn
         }
         try {
             return InspectorParseEngine.parse(hl7Message);
+        } catch (IllegalArgumentException e) {
+            // Input validation messages are already user-facing
+            throw new ClientException(e.getMessage());
         } catch (Exception e) {
             throw new ClientException("Failed to parse HL7 message: " + e.getMessage());
         }

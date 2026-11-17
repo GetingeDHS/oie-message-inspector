@@ -1,7 +1,7 @@
 {
     "id": "message-inspector",
     "name": "Message Inspector",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "author": "Getinge IT Solutions GmbH",
     "description": "Structured tree view with field-level descriptions, table lookups, and validation for HL7v2 messages.",
     "enabled": true,

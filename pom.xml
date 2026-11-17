@@ -17,7 +17,7 @@
     <description>Structured tree view with field-level descriptions, table lookups, and validation for HL7v2 messages.</description>
 
     <properties>
-        <revision>1.0.0</revision>
+        <revision>1.0.1</revision>
         <!-- OIE matches major.minor.patch exactly against this list; add patch releases explicitly -->
         <oie.compatibleVersions>4.6.0, 4.7.0</oie.compatibleVersions>
         <mirth.version>4.5.2</mirth.version>
