@@ -29,7 +29,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Supported OIE versions come from the same POM property that feeds plugin.xml
+          versions=$(sed -n 's:.*<oie.compatibleVersions>\(.*\)</oie.compatibleVersions>.*:\1:p' pom.xml)
+          if [ -z "$versions" ]; then
+            echo "::error::oie.compatibleVersions not found in pom.xml"
+            exit 1
+          fi
+          notes=$(printf '%s\n\n%s\n%s\n%s\n' \
+            "**Compatible with OIE ${versions}**" \
+            "1. Download the ZIP below and extract it into the OIE \`extensions/\` directory" \
+            "2. Restart the OIE server" \
+            "3. Open \"Message Inspector\" in the Web Client")
           gh release create "$GITHUB_REF_NAME" \
             message-inspector-plugin/target/oie-message-inspector-*.zip \
             --title "Message Inspector ${GITHUB_REF_NAME#v}" \
+            --notes "$notes" \
             --generate-notes
