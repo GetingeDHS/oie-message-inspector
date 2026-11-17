@@ -318,6 +318,45 @@ function getUrlParams() {
 // API
 // ---------------------------------------------------------------------------
 
+var HL7_START = /^(MSH|FHS|BHS)\|/;
+
+// Returns a user-facing explanation if the content is clearly not HL7v2, otherwise null.
+// dataType is the OIE data type stored with the message content (e.g. "HL7V2", "JSON", "XML").
+function describeNonHL7(content, dataType) {
+    var head = String(content || '').replace(/^[﻿\u000B\s]+/, '');
+    if (!head || HL7_START.test(head)) return null;
+
+    var kind = null;
+    if (dataType && String(dataType).toUpperCase() !== 'HL7V2') kind = String(dataType);
+    else if (head.charAt(0) === '{' || head.charAt(0) === '[') kind = 'JSON';
+    else if (head.charAt(0) === '<') kind = 'XML';
+    if (!kind) return null; // unknown format: let the server report the parse error
+
+    return 'This message is ' + kind + ', not HL7v2. Message Inspector supports HL7v2 messages only '
+        + '(they start with an MSH, FHS or BHS segment).';
+}
+
+// Extracts the readable message from an OIE error response instead of showing the raw stack trace.
+async function readErrorMessage(res) {
+    var text = '';
+    try { text = await res.text(); } catch (e) { /* */ }
+    var detail = null;
+    var xml = /<detailMessage>([\s\S]*?)<\/detailMessage>/.exec(text);
+    if (xml) {
+        var ta = document.createElement('textarea');
+        ta.innerHTML = xml[1];
+        detail = ta.value;
+    } else {
+        var json = /"detailMessage"\s*:\s*("(?:[^"\\]|\\.)*")/.exec(text);
+        if (json) {
+            try { detail = JSON.parse(json[1]); } catch (e) { /* */ }
+        }
+    }
+    if (detail) return detail;
+    if (text && text.length <= 300 && text.indexOf('<') === -1) return '[' + res.status + '] ' + text;
+    return '[' + res.status + '] ' + (res.statusText || 'Request failed');
+}
+
 function findConnectorContent(connMsg, targetId) {
     if (!connMsg || typeof connMsg !== 'object') return null;
     var contentSources = targetId === 0
@@ -326,7 +365,11 @@ function findConnectorContent(connMsg, targetId) {
     for (var c = 0; c < contentSources.length; c++) {
         var src = connMsg[contentSources[c]];
         if (src && src.content) {
-            return { content: src.content, connectorName: connMsg.connectorName || ('Connector ' + targetId) };
+            return {
+                content: src.content,
+                dataType: src.dataType || null,
+                connectorName: connMsg.connectorName || ('Connector ' + targetId),
+            };
         }
     }
     return null;
@@ -398,8 +441,7 @@ async function fetchMessageContent(channelId, messageId, metaDataId) {
             credentials: 'same-origin',
         });
         if (!res.ok) {
-            var text = await res.text().catch(function () { return res.statusText; });
-            throw new Error('Failed to fetch message: [' + res.status + '] ' + (text || res.statusText));
+            throw new Error('Failed to fetch message: ' + await readErrorMessage(res));
         }
         msg = unwrap(await res.json());
     }
@@ -411,7 +453,10 @@ async function fetchMessageContent(channelId, messageId, metaDataId) {
     throw new Error('No HL7 content found for connector ' + metaDataId);
 }
 
-async function parseHL7(messageContent) {
+async function parseHL7(messageContent, dataType) {
+    var notHL7 = describeNonHL7(messageContent, dataType);
+    if (notHL7) throw new Error(notHL7);
+
     var res = await fetch(API_PARSE, {
         method: 'POST',
         headers: {
@@ -423,8 +468,7 @@ async function parseHL7(messageContent) {
         body: messageContent,
     });
     if (!res.ok) {
-        var text = await res.text().catch(function () { return res.statusText; });
-        throw new Error('[' + res.status + '] ' + (text || res.statusText));
+        throw new Error(await readErrorMessage(res));
     }
     var raw = await res.json();
     var result = unwrap(raw);
@@ -1305,14 +1349,21 @@ function InspectorView(props) {
 
         if (query.fromBrowser) {
             var stored = null;
-            try { stored = sessionStorage.getItem(INSPECTOR_SESSION_KEY); } catch (e) { /* */ }
+            var storedType = null;
+            try {
+                stored = sessionStorage.getItem(INSPECTOR_SESSION_KEY);
+                storedType = sessionStorage.getItem(INSPECTOR_SESSION_TYPE_KEY);
+            } catch (e) { /* */ }
             if (stored) {
-                try { sessionStorage.removeItem(INSPECTOR_SESSION_KEY); } catch (e) { /* */ }
+                try {
+                    sessionStorage.removeItem(INSPECTOR_SESSION_KEY);
+                    sessionStorage.removeItem(INSPECTOR_SESSION_TYPE_KEY);
+                } catch (e) { /* */ }
                 deepLinkTriggered.current = true;
                 setMessageInput(stored);
                 setDeepLinkInfo({ source: 'Message Browser' });
                 setLoading(true);
-                parseHL7(stored).then(function (parsed) {
+                parseHL7(stored, storedType).then(function (parsed) {
                     setResult(parsed);
                     setLoading(false);
                 }).catch(function (err) {
@@ -1349,7 +1400,7 @@ function InspectorView(props) {
                 if (!prev) return prev;
                 return { channelId: prev.channelId, messageId: prev.messageId, metaDataId: prev.metaDataId, connectorName: msgData.connectorName };
             });
-            return parseHL7(msgData.content);
+            return parseHL7(msgData.content, msgData.dataType);
         }).then(function (parsed) {
             setResult(parsed);
             setLoading(false);
@@ -1509,7 +1560,7 @@ function InspectorView(props) {
                 <div style={{
                     color: 'var(--mi-error-dark)', background: 'var(--mi-error-bg-subtle)',
                     padding: '0.5rem 0.75rem', borderRadius: '4px', fontSize: '13px',
-                    fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+                    whiteSpace: 'pre-wrap', wordBreak: 'break-word',
                 }}>
                     {error}
                 </div>
@@ -1556,6 +1607,7 @@ function InspectorView(props) {
 // ---------------------------------------------------------------------------
 
 var INSPECTOR_SESSION_KEY = 'oie-inspector-message';
+var INSPECTOR_SESSION_TYPE_KEY = 'oie-inspector-message-type';
 
 function extractHL7Content(connectorMessage) {
     if (!connectorMessage) return null;
@@ -1563,7 +1615,7 @@ function extractHL7Content(connectorMessage) {
     for (var i = 0; i < sources.length; i++) {
         var src = connectorMessage[sources[i]];
         if (src && src.content && typeof src.content === 'string' && src.content.length > 3) {
-            return src.content;
+            return { content: src.content, dataType: src.dataType || null };
         }
     }
     return null;
@@ -1590,9 +1642,20 @@ function setupMessageAction() {
         icon: 'search',
         order: 100,
         onInvoke: function (message, ctx) {
-            var content = extractHL7Content(ctx.connectorMessage);
-            if (content) {
-                try { sessionStorage.setItem(INSPECTOR_SESSION_KEY, content); } catch (e) { /* quota */ }
+            var extracted = extractHL7Content(ctx.connectorMessage);
+            if (extracted) {
+                // Stay in the Message Browser for non-HL7 messages if we can tell the user there;
+                // otherwise the inspector view shows the same explanation.
+                var notHL7 = describeNonHL7(extracted.content, extracted.dataType);
+                if (notHL7 && platform.ui && platform.ui.toast) {
+                    platform.ui.toast(notHL7, 'warn');
+                    return;
+                }
+                try {
+                    sessionStorage.setItem(INSPECTOR_SESSION_KEY, extracted.content);
+                    if (extracted.dataType) sessionStorage.setItem(INSPECTOR_SESSION_TYPE_KEY, extracted.dataType);
+                    else sessionStorage.removeItem(INSPECTOR_SESSION_TYPE_KEY);
+                } catch (e) { /* quota */ }
                 navigateToInspector('/message-inspector?fromBrowser=1');
                 return;
             }
@@ -1603,7 +1666,7 @@ function setupMessageAction() {
                 return;
             }
             if (platform.ui && platform.ui.toast) {
-                platform.ui.toast('No HL7 content found for this message.', 'warning');
+                platform.ui.toast('No HL7 content found for this message.', 'warn');
             }
         },
     });

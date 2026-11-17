@@ -80,8 +80,9 @@ public final class InspectorParseEngine {
         }
 
         if (!normalizedMessage.startsWith("MSH|") && !normalizedMessage.startsWith("FHS|") && !normalizedMessage.startsWith("BHS|")) {
-            throw new IllegalArgumentException("Message must start with MSH|, FHS|, or BHS| — found: '"
-                    + normalizedMessage.substring(0, Math.min(normalizedMessage.length(), 20)) + "...'");
+            // Do not echo message content: it may contain patient data
+            throw new IllegalArgumentException(
+                    "Not an HL7v2 message. HL7v2 messages start with an MSH, FHS or BHS segment.");
         }
 
         String version;
